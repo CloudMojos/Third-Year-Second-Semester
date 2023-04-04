@@ -32,7 +32,11 @@ function printSudoku(sudoku) {
 
 // creates a clone of the array but instead only 1 and 0
 // 1 being it is a given cell, 0 if it is not
-function fixSudoku(fixedSudoku){
+function fixSudoku(sudoku){
+    let fixedSudoku = [...sudoku]
+    for (let i = 0; i < sudoku.length; i++) {
+        fixedSudoku[i] = sudoku[i].slice()
+    }
     for (let i = 0; i < fixedSudoku.length; i++) {
         for (let j = 0; j < fixedSudoku[i].length; j++) {
             if (fixedSudoku[i][j] != 0) {
@@ -145,13 +149,43 @@ function fillBlocksRandom(sudoku, listOfBlocks) {
             }
         })
     })
-    console.log(sudoku)
+    // console.log(sudoku)
     return sudoku
 }
 
+function boxToFlip(sudoku, listOfBlocks, fixedSudoku) {
+    const blockIndex = Math.floor(Math.random() * listOfBlocks.length)
+    const block = listOfBlocks[blockIndex]
+    console.log(blockIndex)
+    console.log()
+    // From block, select valid indeces that are not fixed
+    let validBoxes = block.filter(box => {
+        if (fixedSudoku[box[0]][box[1]] === 0) {
+            return sudoku[box[0]][box[1]]
+        }
+    })
+    if (validBoxes.length < 2) {
+        return []
+    }
+    // Select two indeces from that validboxes
+    validBoxes = shuffle(validBoxes)
+
+    // Returns two indices 
+    return [validBoxes[0], validBoxes[1]]
+}
+
+// Flip the boxes, then create a new sudoku state
+function flipTwoBoxes() {
+
+}
+
 console.log()
-// printSudoku(dummySudoku)
-// console.log(totalNumOfErrors(dummySudoku))
-const listOfBlocks = createListOfBlocks(dummySudoku)
-const sudoku = fillBlocksRandom(startingSudoku, listOfBlocks)
-                                    
+printSudoku(startingSudoku)
+let sudoku = [...startingSudoku]
+const fixedSudoku = fixSudoku(sudoku)
+console.log(fixedSudoku)
+const listOfBlocks = createListOfBlocks(sudoku)
+sudoku = fillBlocksRandom(sudoku, listOfBlocks)
+console.log()
+printSudoku(sudoku)
+const boxes = boxToFlip(sudoku, listOfBlocks, fixedSudoku)

@@ -8,7 +8,7 @@ We must first think of a way to represent the board and its entities in code.
 
 I started with counting the number of errors in a given board.
 After that, I was able to write code that creates a list of block (will be necessary for the next function) and randomize the values for each of that blocks.
-The next step involves randomly selecting a block, and then randomly flipping two values that is not a given. 
+The next step involves randomly selecting a block, and then randomly flipping two values that is not a given. It will be then stored as a proposed state 
 
 
 ```
