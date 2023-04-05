@@ -1,3 +1,12 @@
+/**********Submitted by:********/
+/***Joshuel Ernest Q. Simbulan**/
+/****Artificial Intelligence****/
+
+// NOTE! To run this code, install node using npm. Then `node ./solution.js`
+// This also works with 4x4, 16x16, maybe even 25x25 and greater. I made it so that it works with all perfect square length.
+// I didn't change the `printSudoku()` function to accomodate all sizes.
+
+// I've spent ridiculous amount of hours on this one 😅
 let startingSudoku = [
                     [1, 0, 0, 0],
                     [0, 2, 0, 0],
@@ -6,11 +15,16 @@ let startingSudoku = [
 ]
 
 let dummySudoku = [
-                [1, 3, 2, 1],
-                [4, 2, 3, 4],
-                [3, 2, 3, 1],
-                [4, 1, 2, 4]
+                [1, 3, 2, 2],
+                [4, 1, 2, 2],
+                [3, 2, 2, 2],
+                [4, 2, 2, 2]
 ]
+
+// const listOfBlocks = createListOfBlocks(dummySudoku)
+// // console.log(rowErrors(dummySudoku, 0, 2))
+// console.log(highestErrorBlock(dummySudoku, listOfBlocks))
+
 
 // takes a sudoku (n x n array) and print it on the console
 // this is configured for  4x4 sudoku
@@ -58,9 +72,9 @@ function countOccurence(arr, value) {
 
 
 // Counts the total number of errors in rows
-function rowErrors(sudoku) {
+function rowErrors(sudoku, startingRow = 0, endingRow = sudoku.length) {
     let errorCount = 0
-    for (let i = 0; i < sudoku.length; i++) {
+    for (let i = startingRow; i < endingRow; i++) {
     //    errorCount += countOccurence(sudoku[i], i + 1)
         for (let j = 0; j < sudoku.length; j++) {
             errorCount += countOccurence(sudoku[i], j + 1)
@@ -69,11 +83,13 @@ function rowErrors(sudoku) {
     return errorCount
 }
 
-function columnErrors(sudoku) {
+// console.log(columnErrors(dummySudoku))
+
+function columnErrors(sudoku, startingCol = 0, endingCol = sudoku.length) {
     let errorCount = 0
     // traverse, print the columns
     let column = []
-    for (let i = 0; i < sudoku.length; i++) {
+    for (let i = startingCol; i < endingCol; i++) {
         for (let j = 0; j < sudoku.length; j++) {
             column.push(sudoku[j][i])
         }
@@ -83,6 +99,20 @@ function columnErrors(sudoku) {
         column = []
     }
     return errorCount
+}
+
+function blockErrors(block, sudoku) {
+    let errorCount = 0
+    
+    let tempBox = block[0]
+    const rowStart = tempBox[0]
+    const colStart = tempBox[1]
+    
+    tempBox = block[sudoku.length - 1]
+    const rowEnd = tempBox[0] + 1
+    const colEnd = tempBox[1] + 1
+
+    return rowErrors(sudoku, rowStart, rowEnd) + columnErrors(sudoku, colStart, colEnd)
 }
 
 // n is the size of an n by n block, 
@@ -125,7 +155,7 @@ function shuffle(array) {
     }
   
     return newArray
-  }
+}
 
 function fillBlocksRandom(sudoku, listOfBlocks) {
     let values = Array.from({length: sudoku.length}, (_, i) => i + 1)
@@ -153,18 +183,15 @@ function fillBlocksRandom(sudoku, listOfBlocks) {
     return sudoku
 }
 
-function boxToFlip(sudoku, listOfBlocks, fixedSudoku) {
-    const blockIndex = Math.floor(Math.random() * listOfBlocks.length)
+function boxToFlip(sudoku, listOfBlocks, fixedSudoku, blockIndex = Math.floor(Math.random() * listOfBlocks.length)) {
     const block = listOfBlocks[blockIndex]
-    console.log(blockIndex)
-    console.log()
     // From block, select valid indeces that are not fixed
     let validBoxes = block.filter(box => {
         if (fixedSudoku[box[0]][box[1]] === 0) {
             return sudoku[box[0]][box[1]]
         }
     })
-    if (validBoxes.length < 2) {
+    if (validBoxes.length < Math.sqrt(sudoku.length)) {
         return []
     }
     // Select two indeces from that validboxes
@@ -175,17 +202,112 @@ function boxToFlip(sudoku, listOfBlocks, fixedSudoku) {
 }
 
 // Flip the boxes, then create a new sudoku state
-function flipTwoBoxes() {
+function flipTwoBoxes(sudoku, boxes) {
+    let tempBox = []
+    let proposedSudoku = [...sudoku]
+    for (let i = 0; i < sudoku.length; i++) {
+        proposedSudoku[i] = sudoku[i].slice()
+    }
+    // console.log(sudoku[boxes[0][0]][boxes[0][1]], sudoku[boxes[1][0]][boxes[1][1]])
+    // Take the value in boxes[0], boxes[1] then change the values in the copy.
+    let box1 = sudoku[boxes[0][0]][boxes[0][1]]
+    let box2 = sudoku[boxes[1][0]][boxes[1][1]]
 
+    // Changing the values
+    proposedSudoku[boxes[0][0]][boxes[0][1]] = box2
+    proposedSudoku[boxes[1][0]][boxes[1][1]] = box1
+
+    // printSudoku(sudoku)
+    // console.log()
+    // console.log(sudoku[boxes[0][0]][boxes[0][1]], sudoku[boxes[1][0]][boxes[1][1]])
+    // console.log()
+    // printSudoku(proposedSudoku)
+
+    return proposedSudoku
 }
 
-console.log()
-printSudoku(startingSudoku)
-let sudoku = [...startingSudoku]
-const fixedSudoku = fixSudoku(sudoku)
-console.log(fixedSudoku)
-const listOfBlocks = createListOfBlocks(sudoku)
-sudoku = fillBlocksRandom(sudoku, listOfBlocks)
-console.log()
-printSudoku(sudoku)
-const boxes = boxToFlip(sudoku, listOfBlocks, fixedSudoku)
+// If total error of proposed is equal or less than current, change current to proposed
+function chooseNewState(sudoku, proposedSudoku) {
+    errorSudoku = totalNumOfErrors(sudoku)
+    errorProposed = totalNumOfErrors(proposedSudoku)
+
+    if (errorProposed >= errorSudoku) {
+        return sudoku
+    }
+
+    return proposedSudoku
+}
+
+function highestErrorBlock(sudoku, listOfBlocks) {
+    let blockErrorList = []
+    // Iterate over the list of blocks, store the errors
+    listOfBlocks.forEach(block => {
+        blockErrorList.push(blockErrors(block, sudoku))
+    })
+    // Select the highest, find its index
+    const highest = Math.max(...blockErrorList)
+    // let index
+
+    for (let i = 0; i < listOfBlocks.length; i++) {
+        if (highest === blockErrors(listOfBlocks[i], sudoku)) {
+            index = i
+            break
+        }
+    }
+    
+    return index
+}
+
+function solveSudoku(sudoku) {
+    console.log('The given sudoku: ')
+    printSudoku(sudoku)
+
+    console.log()
+    const fixedSudoku = fixSudoku(sudoku)
+    const listOfBlocks = createListOfBlocks(sudoku)
+    sudoku = fillBlocksRandom(sudoku, listOfBlocks)
+
+    console.log('First iteration sudoku: ')
+    printSudoku(sudoku)
+    console.log()
+
+    let error = totalNumOfErrors(sudoku)
+    let stuckCount = 0
+    while (error > 1) {
+        
+        let boxes = boxToFlip(sudoku, listOfBlocks, fixedSudoku)
+        let proposedSudoku = flipTwoBoxes(sudoku, boxes)
+        let newSudoku = chooseNewState(sudoku, proposedSudoku)
+
+        console.log('Boxes before selection: ' + boxes)
+        if (stuckCount > 120) {
+            let index = highestErrorBlock(sudoku, listOfBlocks)
+            boxes = boxToFlip(sudoku, listOfBlocks, fixedSudoku, index)
+            console.log('Highest Error is in ' + boxes)
+            stuckCount = 0
+            newSudoku = flipTwoBoxes(sudoku, boxes)
+        }
+        
+        if (sudoku.join(' ') == newSudoku.join(' ')) {
+            stuckCount += 1
+            console.log('Stuck: ' + stuckCount)
+        } 
+        sudoku = newSudoku
+
+        error = totalNumOfErrors(sudoku)
+
+        console.log('Error: ' + error)
+
+        // console.log('New Sudoku')
+        // printSudoku(newSudoku)
+        // console.log()
+        // console.log('Sudoku')
+        // printSudoku(sudoku)
+        // console.log()
+        // console.log(`Error: ${totalNumOfErrors(sudoku)}`)
+    }
+    return sudoku
+}
+
+printSudoku(solveSudoku(startingSudoku))
+// console.log(printSudoku([ [ 1, 3, 4, 2 ], [ 4, 2, 1, 3 ], [ 2, 4, 3, 1 ], [ 3, 1, 2, 4 ] ]))

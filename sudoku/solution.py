@@ -46,7 +46,7 @@ def CalculateNumberOfErrors(sudoku):
     return(numberOfErrors)
 
 def CalculateNumberOfErrorsRowColumn(row, column, sudoku):
-    numberOfErrors = (9 - len(np.unique(sudoku[:][column]))) + (9 - len(np.unique(sudoku[row][:])))
+    numberOfErrors = (9 - len(np.unique(sudoku[:,column]))) + (9 - len(np.unique(sudoku[row,:])))
     return(numberOfErrors)
 
 
@@ -95,7 +95,7 @@ def ProposedState (sudoku, fixedSudoku, listOfBlocks):
     randomBlock = random.choice(listOfBlocks)
 
     if SumOfOneBlock(fixedSudoku, randomBlock) > 6:  
-        return(sudoku)
+        return(sudoku, 1, 1)
     boxesToFlip = TwoRandomBoxesWithinBlock(fixedSudoku, randomBlock)
     proposedSudoku = FlipBoxes(sudoku,  boxesToFlip)
     return([proposedSudoku, boxesToFlip])
@@ -145,8 +145,11 @@ def solveSudoku (sudoku):
     sigma = CalculateInitialSigma(sudoku, fixedSudoku, listOfBlocks)
     score = CalculateNumberOfErrors(tmpSudoku)
     itterations = ChooseNumberOfItterations(fixedSudoku)
+    if score <= 0:
+        solutionFound = 1
+    while (solutionFound == 0):
 
-    while solutionFound == 0:
+        # while solutionFound == 0:
         previousScore = score
         for i in range (0, itterations):
             newState = ChooseNewState(tmpSudoku, fixedSudoku, listOfBlocks, sigma)
@@ -172,11 +175,10 @@ def solveSudoku (sudoku):
         if(CalculateNumberOfErrors(tmpSudoku)==0):
             PrintSudoku(tmpSudoku)
             break
+            
     f.close()
     return(tmpSudoku)
 
 solution = solveSudoku(sudoku)
-# print(CalculateNumberOfErrors(solution))
-list = CreateList3x3Blocks()
-print(list[0])
+print(CalculateNumberOfErrors(solution))
 PrintSudoku(solution)
